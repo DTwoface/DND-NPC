@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPC Manager</title>
+    <style>
+        body {
+            font-family: 'Garamond', serif;
+            background: url('https://www.transparenttextures.com/patterns/old-paper.png');
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #4a2c1a;
+            color: #f8f0e3;
+            padding: 1rem;
+            text-align: center;
+            border-bottom: 5px solid #d6c1a0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #d6c1a0;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .npc-table, .game-book-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+        .npc-table th, .npc-table td, .game-book-table th, .game-book-table td {
+            border: 1px solid #d6c1a0;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .npc-table th, .game-book-table th {
+            background-color: #4a2c1a;
+            color: #f8f0e3;
+            font-weight: bold;
+        }
+        .npc-table tbody tr:nth-child(even), .game-book-table tbody tr:nth-child(even) {
+            background-color: #f9f4e4;
+        }
+        .npc-table img, .game-book-table img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d6c1a0;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+        .form-group button {
+            background-color: #4a2c1a;
+            color: #f8f0e3;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .form-group button:hover {
+            background-color: #3e2416;
+        }
+        .highlight {
+            background-color: #f8e1b3;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .character-sheet {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #d6c1a0;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .character-sheet h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>NPC Manager</h1>
+    </header>
+    <div class="container">
+        <h2>Neue NPC hinzufügen</h2>
+        <form id="npc-form">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Beschreibung:</label>
+                <textarea id="description" name="description" rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="image">Bild:</label>
+                <input type="file" id="image" name="image" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label for="notes">Spieler Notizen:</label>
+                <textarea id="notes" name="notes" rows="4" placeholder="Notizen, wie der NPC gespielt werden soll"></textarea>
+            </div>
+            <div class="form-group">
+                <button type="submit">Hinzufügen</button>
+            </div>
+        </form>
+        <h2>NPC-Liste</h2>
+        <table class="npc-table">
+            <thead>
+                <tr>
+                    <th>Bild</th>
+                    <th>Name</th>
+                    <th>Beschreibung</th>
+                    <th>Spieler Notizen</th>
+                    <th>Aktionen</th>
+                    <th>Spielbuch</th>
+                </tr>
+            </thead>
+            <tbody id="npc-list">
+                <!-- NPC-Daten werden hier eingefügt -->
+            </tbody>
+        </table>
+        <div class="character-sheet">
+            <h2>Charakterbogen</h2>
+            <form id="character-form">
+                <div class="form-group">
+                    <label for="npc-name">NPC Name:</label>
+                    <input type="text" id="npc-name" name="npc-name" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="character-notes">Charakter Notizen:</label>
+                    <textarea id="character-notes" name="character-notes" rows="4" placeholder="Notizen für das Spiel"></textarea>
+                </div>
+                <div class="form-group">
+                    <button type="submit">Speichern</button>
+                </div>
+            </form>
+        </div>
+        <h2>Spielbuch</h2>
+        <table class="game-book-table">
+            <thead>
+                <tr>
+                    <th>Bild</th>
+                    <th>Name</th>
+                    <th>Beschreibung</th>
+                    <th>Charakter Notizen</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody id="game-book-list">
+                <!-- NPC-Daten werden hier eingefügt -->
+            </tbody>
+        </table>
+    </div>
+    <script>
+        document.getElementById('npc-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            // Formulardaten holen
+            const name = document.getElementById('name').value;
+            const description = document.getElementById('description').value;
+            const notes = document.getElementById('notes').value;
+            const imageFile = document.getElementById('image').files[0];
+            
+            // Bild in Base64 konvertieren
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                const imageBase64 = reader.result;
+                
+                // Neue Zeile in die NPC-Tabelle einfügen
+                const npcTable = document.getElementById('npc-list');
+                const row = npcTable.insertRow();
+                row.insertCell(0).innerHTML = imageFile ? `<img src="${imageBase64}" alt="NPC Bild">` : 'Kein Bild';
+                row.insertCell(1).textContent = name;
+                row.insertCell(2).textContent = description;
+                row.insertCell(3).textContent = notes;
+                row.insertCell(4).innerHTML = '<button onclick="moveToGameBook(this)">Zum Spielbuch hinzufügen</button>';
+                row.insertCell(5).innerHTML = '<button onclick="removeRow(this)">Löschen</button>';
+                
+                // Formulardaten zurücksetzen
+                document.getElementById('npc-form').reset();
+            };
+            
+            if (imageFile) {
+                reader.readAsDataURL(imageFile);
+            } else {
+                reader.onloadend();
+            }
+        });
+
+        function moveToGameBook(button) {
+            const row = button.parentNode.parentNode;
+            const gameBookTable = document.getElementById('game-book-list');
+            
+            // Zeile in die Spielbuch-Tabelle verschieben
+            const newRow = gameBookTable.insertRow();
+            newRow.innerHTML = row.innerHTML;
+            newRow.cells[4].innerHTML = '<button onclick="removeFromGameBook(this)">Löschen</button>';
+            newRow.cells[5].innerHTML = '';
+            
+            // Zeile aus der NPC-Tabelle entfernen
+            row.parentNode.removeChild(row);
+        }
+
+        function removeRow(button) {
+            const row = button.parentNode.parentNode;
+            row.parentNode.removeChild(row);
+        }
+
+        function removeFromGameBook
+                // Bild im Charakterbogen anzeigen
+                const characterImageDisplay = document.getElementById('character-image-display');
+                if (characterImageFile) {
+                    characterImageDisplay.innerHTML = `<img src="${imageBase64}" alt="Charakterbogen Bild">`;
+                } else {
+                    characterImageDisplay.innerHTML = 'Kein Bild';
+                }
+                
+                // Notizen speichern
+                const notesDisplay = document.createElement('p');
+                notesDisplay.textContent = characterNotes;
+                characterImageDisplay.appendChild(notesDisplay);
+
+                // Formulardaten zurücksetzen
+                document.getElementById('character-form').reset();
+            };
+            
+            if (characterImageFile) {
+                reader.readAsDataURL(characterImageFile);
+            } else {
+                reader.onloadend();
+            }
+        });
+
+        function moveToGameBook(button) {
+            const row = button.closest('tr');
+            const gameBookTable = document.getElementById('game-book-list');
+            
+            // Die Zeile in die Spielbuch-Tabelle verschieben
+            const newRow = gameBookTable.insertRow();
+            newRow.innerHTML = row.innerHTML;
+            newRow.cells[4].innerHTML = '<button onclick="moveToNpcList(this)">Zur NPC-Liste zurück</button>';
+            newRow.cells[5].innerHTML = '<button onclick="removeRow(this)">Löschen</button>';
+            
+            // Zeile aus der NPC-Tabelle entfernen
+            row.remove();
+        }
+
+        function moveToNpcList(button) {
+            const row = button.closest('tr');
+            const npcTable = document.getElementById('npc-list');
+            
+            // Die Zeile in die NPC-Tabelle verschieben
+            const newRow = npcTable.insertRow();
+            newRow.innerHTML = row.innerHTML;
+            newRow.cells[4].innerHTML = '<button onclick="moveToGameBook(this)">Zum Spielbuch hinzufügen</button>';
+            newRow.cells[5].innerHTML = '<button onclick="removeRow(this)">Löschen</button>';
+            
+            // Zeile aus der Spielbuch-Tabelle entfernen
+            row.remove();
+        }
+
+        function removeRow(button) {
+            const row = button.closest('tr');
+            row.remove();
+        }
+    </script>
+</body>
+</html>
